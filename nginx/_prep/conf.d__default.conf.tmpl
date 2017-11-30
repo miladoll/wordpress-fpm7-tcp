@@ -1,0 +1,34 @@
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name localhost %%NGINX_SERVER_NAME%%;
+    root %%NGINX_DOCROOT%%;
+    index index.php index.html index.htm;
+
+    location / {
+        index index.php;
+        if (!-e $request_filename) {
+            rewrite ^.+?($/-.*) $1 last;
+            rewrite ^.+?(/wp-.*) $1 last;
+            rewrite ^.+?(/.*\.php)$ $1 last;
+            rewrite ^(/.*)/$ $1 last;
+            rewrite ^ /index.php last;
+        }
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass %%WORDPRESS_CONTAINER%%:%%WORDPRESS_PHPFPM_PORT%%;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME %%NGINX_DOCROOT%%$fastcgi_script_name;
+        include /etc/nginx/fastcgi_params;
+        fastcgi_read_timeout 120;
+    }
+
+    # You may need this to prevent return 404 recursion.
+    location = /404.html {
+        internal;
+    }
+    location ~* \.(?:git|gitignore)$ {
+        return 403;
+    }
+}

@@ -1,0 +1,55 @@
+version: "3.1"
+
+services:
+    # mysql
+    # https://store.docker.com/images/mysql
+    mysql:
+        image: mysql
+        volumes:
+            - ./_vol/mysql/var-lib-mysql:/var/lib/mysql
+        env_file:
+            - ./runtime_env.txt
+    # phpmyadmin
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        volumes:
+            - ./_vol/phpmyadmin/sessions:/sessions
+        links:
+            - mysql
+        depends_on:
+            - mysql
+        ports:
+              - 8081:80
+              # http://localhost:8081/
+        env_file:
+            - ./runtime_env.txt
+    # nginx
+    # original build. base os is Alpine 3.6
+    nginx:
+        build:
+            context: ./nginx
+            args:
+                GID_NGINX: 101
+                UID_NGINX: 101
+        ports:
+            - 80:80
+              # http://localhost/
+        volumes:
+            - ./_vol/_shared/var__www-nginx__wordpress:/var/www-nginx/wordpress
+        env_file:
+            - ./runtime_env.txt
+    # wordpress
+    # original build. base os is Alpine 3.6
+    wordpress:
+        build:
+            context: ./wordpress
+            args:
+                GID_NGINX: 101
+                UID_NGINX: 101
+        links:
+            - mysql
+            - nginx
+        volumes:
+            - ./_vol/_shared/var__www-nginx__wordpress:/var/www-nginx/wordpress
+        env_file:
+            - ./runtime_env.txt
