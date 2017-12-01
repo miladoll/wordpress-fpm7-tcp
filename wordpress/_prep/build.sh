@@ -147,6 +147,12 @@ do_download_wordpress_core() {
     chown -R nginx.nginx $_WORDPRESS_ROOT
 }
 
+[[ ! -d "$_WORDPRESS_ROOT" ]] \
+    && mkdir -p $_WORDPRESS_ROOT
+if [[ -d "$_WORDPRESS_ROOT" ]]; then
+    chown -R nginx.nginx $_WORDPRESS_ROOT
+    chmod -R g+w,g+s $_WORDPRESS_ROOT
+fi
 [[ -f "$_WORDPRESS_ROOT/wp-config.php" ]] \
     || do_download_wordpress_core
 
