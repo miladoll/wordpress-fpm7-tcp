@@ -137,6 +137,7 @@ _EOF_
 
 cat >> /var/docker/docker-entrypoint.sh <<'_EOF_docker_entrypoint'
 do_download_wordpress_core() {
+    ls -laR $_WORDPRESS_ROOT
     cd $_WORDPRESS_ROOT
     sudo -u nginx \
         wp core download
@@ -171,15 +172,15 @@ done
 
 function do_create_database() {
     $_MYSQL_ROOT <<_EOF_
-        CREATE DATABASE ${MYSQL_DATABASE};
-        CREATE USER "${MYSQL_USER}"@'localhost'
+        CREATE DATABASE \`${MYSQL_DATABASE}\`;
+        CREATE USER \`${MYSQL_USER}\`@\`localhost\`
             IDENTIFIED BY "${MYSQL_WORDPRESS_PASSWORD}";
-        CREATE USER "${MYSQL_USER}"@'%'
+        CREATE USER \`${MYSQL_USER}\`@\`%\`
             IDENTIFIED BY "${MYSQL_WORDPRESS_PASSWORD}";
-        GRANT ALL ON ${MYSQL_DATABASE}.*
-            TO "${MYSQL_USER}"@'localhost';
-        GRANT ALL ON ${MYSQL_DATABASE}.*
-            TO "${MYSQL_USER}"@'%';
+        GRANT ALL ON \`${MYSQL_DATABASE}\`.*
+            TO \`${MYSQL_USER}\`@\`localhost\`;
+        GRANT ALL ON \`${MYSQL_DATABASE}\`.*
+            TO \`${MYSQL_USER}\`@\`%\`;
         FLUSH PRIVILEGES;
 _EOF_
     return $?
@@ -190,7 +191,7 @@ echo "::CHECK DB ${MYSQL_DATABASE} EXIST AND NO TABLE EXIST::"
 # then drop database
 # has user?
 # then drop users
-$_MYSQL_ROOT -se "USE ${MYSQL_DATABASE};" \
+$_MYSQL_ROOT -se "USE \`${MYSQL_DATABASE}\`;" \
     && [[ \
         $( \
             $_MYSQL_ROOT -NB -se \
@@ -200,7 +201,7 @@ $_MYSQL_ROOT -se "USE ${MYSQL_DATABASE};" \
                 ' \
         ) -lt 1 \
         ]] \
-    && $_MYSQL_ROOT -se "DROP DATABASE IF EXISTS ${MYSQL_DATABASE};" \
+    && $_MYSQL_ROOT -se "DROP DATABASE IF EXISTS \`${MYSQL_DATABASE}\`;" \
     && [[ \
         $( \
             $_MYSQL_ROOT -se \
@@ -211,12 +212,12 @@ $_MYSQL_ROOT -se "USE ${MYSQL_DATABASE};" \
         ]] \
     && $_MYSQL_ROOT -se \
         "\
-            DROP USER \"${MYSQL_USER}\"@\"localhost\"; \
-            DROP USER \"${MYSQL_USER}\"@\"%\"; \
+            DROP USER \`${MYSQL_USER}\`@\`localhost\`; \
+            DROP USER \`${MYSQL_USER}\`@\`%\`; \
         "
 
 echo "::CREATE ${MYSQL_DATABASE} WHEN NOT EXISTS::"
-$_MYSQL_ROOT -se "USE ${MYSQL_DATABASE};" \
+$_MYSQL_ROOT -se "USE \`${MYSQL_DATABASE}\`;" \
     || do_create_database \
         || ( \
             echo "Cannot create database: ${MYSQL_DATABASE}"; \
